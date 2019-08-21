@@ -11494,6 +11494,20 @@ force-tlsv13
   the server. This option is also available on global statement
   "ssl-default-server-options". See also "ssl-min-ver" and ssl-max-ver".
 
+forward-dst-sni
+  When this option is enabled for a server whose address is set from the
+  destination address of the client, then the SNI field for TLS communication
+  with the server will be set from the authority TLV sent by the client in
+  the PROXY header, if the TLV is present. Forwarding the client's destination
+  address is enabled when the server is configured with address "0.0.0.0" or
+  "*". To make use of this feature, the client must use version 2 of the
+  PROXY protocol to communicate with haproxy (since only v2 supports TLVs),
+  and send the desired value in the authority TLV. That in turn means that
+  the "accept-proxy" parameter must be set for the "bind" configuration. When
+  this option is enabled and the client sends an authority TLV, it overrides
+  setting the SNI for the destination from any SNI set in the TLS connection
+  from the client.
+
 id <value>
   Set a persistent ID for the server. This ID must be positive and unique for
   the proxy. An unused ID will automatically be assigned if unset. The first

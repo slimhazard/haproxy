@@ -843,8 +843,10 @@ int assign_server_address(struct stream *s)
 				/* do nothing if we can't retrieve the address */
 			} else if (cli_conn->dst->ss_family == AF_INET) {
 				((struct sockaddr_in *)s->target_addr)->sin_addr = ((struct sockaddr_in *)cli_conn->dst)->sin_addr;
+				s->flags |= SF_DST_FWD;
 			} else if (cli_conn->dst->ss_family == AF_INET6) {
 				((struct sockaddr_in6 *)s->target_addr)->sin6_addr = ((struct sockaddr_in6 *)cli_conn->dst)->sin6_addr;
+				s->flags |= SF_DST_FWD;
 			}
 		}
 
@@ -1566,7 +1568,19 @@ int connect_server(struct stream *s)
 			s->be->lbprm.server_take_conn(srv);
 
 #ifdef USE_OPENSSL
-		if (srv->ssl_ctx.sni) {
+		if ((s->flags & SF_DST_FWD) != 0 &&
+		    (srv->flags & SRV_F_FWD_DST_SNI) != 0 &&
+		    cli_conn != NULL &&
+		    cli_conn->proxy_authority != NULL &&
+		    !b_is_null(cli_conn->proxy_authority)) {
+                        /* Option forward-dst-sni was enabled, the destination
+                         * address was forwarded from the client, and the
+                         * authority TLV was set; so we set the server sni
+                         * from the TLV value. */
+			ssl_sock_set_servername(srv_conn, b_orig(cli_conn->proxy_authority));
+			srv_conn->flags |= CO_FL_PRIVATE;
+		}
+		else if (srv->ssl_ctx.sni) {
 			struct sample *smp;
 
 			smp = sample_fetch_as_type(s->be, s->sess, s, SMP_OPT_DIR_REQ | SMP_OPT_FINAL,

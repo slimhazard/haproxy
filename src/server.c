@@ -990,6 +990,13 @@ static int srv_parse_tfo(char **args, int *cur_arg, struct proxy *px, struct ser
 	return 0;
 }
 
+/* parse the "forward-dst-sni" server keyword */
+static int srv_parse_forward_dst_sni(char **args, int *cur_arg, struct proxy *px, struct server *newsrv, char **err)
+{
+	newsrv->flags |= SRV_F_FWD_DST_SNI;
+	return 0;
+}
+
 /* Shutdown all connections of a server. The caller must pass a termination
  * code in <why>, which must be one of SF_ERR_* indicating the reason for the
  * shutdown.
@@ -1358,6 +1365,7 @@ static struct srv_kw_list srv_kws = { "ALL", { }, {
 	{ "cookie",              srv_parse_cookie,              1,  1 }, /* Assign a cookie to the server */
 	{ "disabled",            srv_parse_disabled,            0,  1 }, /* Start the server in 'disabled' state */
 	{ "enabled",             srv_parse_enabled,             0,  1 }, /* Start the server in 'enabled' state */
+	{ "forward-dst-sni",     srv_parse_forward_dst_sni,     0,  1 }, /* If the destination address was forwarded, also set SNI from the authority TLV */
 	{ "id",                  srv_parse_id,                  1,  0 }, /* set id# of server */
 	{ "max-reuse",           srv_parse_max_reuse,           1,  1 }, /* Set the max number of requests on a connection, -1 means unlimited */
 	{ "namespace",           srv_parse_namespace,           1,  1 }, /* Namespace the server socket belongs to (if supported) */

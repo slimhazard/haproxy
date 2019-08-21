@@ -18,6 +18,7 @@
 #include <common/namespace.h>
 #include <common/hash.h>
 #include <common/net_helper.h>
+#include <common/buf.h>
 
 #include <proto/connection.h>
 #include <proto/fd.h>
@@ -628,6 +629,18 @@ int conn_recv_proxy(struct connection *conn, int flag)
 					ns = netns_store_lookup((char*)tlv_packet->value, tlv_len);
 					if (ns)
 						conn->proxy_netns = ns;
+					break;
+				}
+
+				case PP2_TYPE_AUTHORITY: {
+					conn->proxy_authority = alloc_trash_chunk();
+					if (conn->proxy_authority == NULL)
+						goto fail;
+					if (b_size(conn->proxy_authority) < tlv_len + 1)
+						goto fail;
+					if (!chunk_memcpy(conn->proxy_authority, (const char *)tlv_packet->value, tlv_len))
+						goto fail;
+					b_putchr(conn->proxy_authority, '\0');
 					break;
 				}
 #endif

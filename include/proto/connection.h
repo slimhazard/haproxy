@@ -471,6 +471,7 @@ static inline void conn_init(struct connection *conn)
 	conn->idle_time = 0;
 	conn->src = NULL;
 	conn->dst = NULL;
+	conn->proxy_authority = NULL;
 }
 
 /* sets <owner> as the connection's owner */
@@ -632,6 +633,8 @@ static inline void conn_free(struct connection *conn)
 		_HA_ATOMIC_SUB(&srv->curr_idle_conns, 1);
 		srv->curr_idle_thr[tid]--;
 	}
+
+	free_trash_chunk(conn->proxy_authority);
 
 	conn_force_unsubscribe(conn);
 	HA_SPIN_LOCK(OTHER_LOCK, &toremove_lock[tid]);
